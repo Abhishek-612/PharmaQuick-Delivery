@@ -34,7 +34,6 @@ import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
 public class NavigationActivity extends AppCompatActivity {
 
-    private BroadcastReceiver broadcastReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,47 +49,6 @@ public class NavigationActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
 
-        if(Build.VERSION.SDK_INT>=23){
-            if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED){
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},1);
-
-            }
-            else{
-                startService();
-            }
-        }
-        else{
-            startService();
-        }
-    }
-
-    void startService() {
-        Intent intent = new Intent(NavigationActivity.this,LocationService.class);
-//        startService(intent);
-
-        Log.i("lu",isMyServiceRunning(LocationService.class)+"");
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch(requestCode){
-            case 1:
-                if(grantResults[0]==PackageManager.PERMISSION_GRANTED)
-                    startService();
-                else
-                    Toast.makeText(this, "Please provide permissions", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private boolean isMyServiceRunning(Class<?> serviceClass) {
-        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (serviceClass.getName().equals(service.service.getClassName())) {
-                return true;
-            }
-        }
-        return false;
     }
 }
 

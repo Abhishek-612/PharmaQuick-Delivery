@@ -4,8 +4,14 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.OneShotPreDrawListener;
 
+import android.Manifest;
+import android.app.ActivityManager;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -33,6 +39,21 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+
+        if(Build.VERSION.SDK_INT>=23){
+            if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED){
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},1);
+            }
+            else{
+                startService();
+            }
+        }
+        else{
+            startService();
+        }
+
+
         if(loggedIn)
             startActivity(new Intent(MainActivity.this, NavigationActivity.class));
         else {
@@ -41,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
             login = findViewById(R.id.login);
 
             mRef = FirebaseDatabase.getInstance().getReference().child("carriers");
+
+
 
             signIn();
         }
@@ -81,4 +104,42 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+
+
+
+
+
+
+
+
+    void startService() {
+        Intent intent = new Intent(MainActivity.this,LocationService.class);
+        startService(intent);
+
+        Log.i("lu",isMyServiceRunning(LocationService.class)+"");
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch(requestCode){
+            case 1:
+                if(grantResults[0]==PackageManager.PERMISSION_GRANTED)
+                    startService();
+                else
+                    Toast.makeText(this, "Please provide permissions", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

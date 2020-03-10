@@ -1,6 +1,7 @@
 package com.example.pharmaquickdelivery.ui.dashboard;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
@@ -33,6 +34,11 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -40,6 +46,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class DashboardFragment extends Fragment implements OnMapReadyCallback, TaskLoadedCallback {
 
@@ -48,7 +56,12 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback, T
     MapView mMapVIew;
     View root;
     Polyline polyline;
+    LatLng src,dest;
     MarkerOptions place1,place2;
+    String store_name;
+    DatabaseReference ref;
+
+    private ProgressDialog progress;
 
 
     @Override
@@ -60,6 +73,8 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback, T
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         root = inflater.inflate(R.layout.fragment_dashboard, container, false);
+        ref = FirebaseDatabase.getInstance().getReference();
+
         return root;
     }
 
@@ -67,23 +82,55 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback, T
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mMapVIew = root.findViewById(R.id.map);
+
+
         if(mMapVIew!=null){
             mMapVIew.onCreate(null);
             mMapVIew.onResume();
             mMapVIew.getMapAsync(this);
         }
 
+        ref.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                double lat=Double.parseDouble(dataSnapshot.child("DeliveryPerson").child("DeliveryPerson1").child("latitude").getValue().toString());
+                double lng=Double.parseDouble(dataSnapshot.child("DeliveryPerson").child("DeliveryPerson1").child("longitude").getValue().toString());
+                src = new LatLng(lat,lng);
+                String order=dataSnapshot.child("DeliveryPerson").child("DeliveryPerson1").child("pendingDeliveries").child("12").getValue().toString();
+                String[] tuple = new String[2];
+                order=dataSnapshot.child("Orders").child(order).child("userlocation").getValue().toString();
+                tuple=order.split(",");
+                lat=Double.parseDouble(tuple[0]);
+                lng=Double.parseDouble(tuple[1]);
+                dest = new LatLng(lat,lng);
 
-        place1= new MarkerOptions().position((new LatLng(27.658143,85.3199503))).title("Location 1").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN));
-        place2= new MarkerOptions().position((new LatLng(27.667491,85.3208583))).title("Location 2").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+
+                place1 = new MarkerOptions().position(src).title("Your Location").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE));
+                place2 = new MarkerOptions().position(dest).title("Destination").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
 
 
-        String url = getUrl(place1.getPosition(),place2.getPosition(),"driving");
+                String url = getUrl(place1.getPosition(), place2.getPosition(), "driving");
 
 //        Toast.makeText(getContext(), url, Toast.LENGTH_SHORT).show();
-        new FetchURL(this,getContext()).execute(url,"driving");
+                new FetchURL(DashboardFragment.this, getContext()).execute(url, "driving");
 
-    }
+                mGoogleMap.addMarker(place1);
+                mGoogleMap.addMarker(place2);
+
+                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(src));
+                mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(src, 16.0f));
+            }
+
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+        }
+
+
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -91,11 +138,7 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback, T
         mGoogleMap=googleMap;
         mGoogleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 
-        mGoogleMap.addMarker(place1);
-        mGoogleMap.addMarker(place2);
 
-        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(27.658143,85.3199503)));
-        mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(27.658143,85.3199503), 16.0f));
     }
 
     private String getUrl(LatLng origin,LatLng dest,String directionMode){
