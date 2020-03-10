@@ -38,8 +38,8 @@ public class LocationService extends Service {
             public void onLocationResult(LocationResult locationResult) {
                 super.onLocationResult(locationResult);
                 Log.d("loc",locationResult.getLastLocation().getLatitude()+", "+locationResult.getLastLocation().getLongitude());
-                DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("carriers").child("abhi_06");
-                ref.child("latitide").setValue(locationResult.getLastLocation().getLatitude());
+                DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("DeliveryPerson").child("DeliveryPerson1");
+                ref.child("latitude").setValue(locationResult.getLastLocation().getLatitude());
                 ref.child("longitude").setValue(locationResult.getLastLocation().getLongitude());
 //                Toast.makeText(LocationService.this, locationResult.getLastLocation().getLatitude()+", "+locationResult.getLastLocation().getLongitude(), Toast.LENGTH_SHORT).show();
             }
