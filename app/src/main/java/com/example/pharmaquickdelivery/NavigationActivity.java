@@ -27,4 +27,5 @@ public class NavigationActivity extends AppCompatActivity {
         NavigationUI.setupWithNavController(navView, navController);
     }
 
+
 }

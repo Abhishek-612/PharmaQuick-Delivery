@@ -1,9 +1,11 @@
 package com.example.pharmaquickdelivery;
 
-public class Order {
+import java.io.Serializable;
+
+public class Order implements Serializable {
 
 
-    private String orderId,name,customerAddress,storeAddress,customerContact,storeContact;
+    private String orderId,name,customerAddress,storeName,storeAddress,customerContact,storeContact;
     private double cost;
 
 
@@ -14,10 +16,19 @@ public class Order {
         this.customerContact = customerContact;
     }
 
-    public Order(String orderId, String name, String customerAddress, String storeAddress, String customerContact, String storeContact, double cost) {
+    public String getStoreName() {
+        return storeName;
+    }
+
+    public void setStoreName(String storeName) {
+        this.storeName = storeName;
+    }
+
+    public Order(String orderId, String name, String customerAddress, String storeName, String storeAddress, String customerContact, String storeContact, double cost) {
         this.orderId = orderId;
         this.name = name;
         this.customerAddress = customerAddress;
+        this.storeName = storeName;
         this.storeAddress = storeAddress;
         this.customerContact = customerContact;
         this.storeContact = storeContact;
